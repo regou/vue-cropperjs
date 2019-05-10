@@ -23,10 +23,12 @@
 
         <div v-if="selectedImage" class="ps-image-uploader__edit-button-group">
             <button @click="reselectImage" class="img-edit-button-group-btn"><icon-camera></icon-camera></button>
-            <button class="img-edit-button-group-btn"><icon-crop></icon-crop></button>
-            <button class="img-edit-button-group-btn"><icon-delete></icon-delete></button>
+            <button @click="isEditing = !isEditing"
+                    :class="{active:isEditing}"
+                    class="img-edit-button-group-btn"><icon-crop></icon-crop></button>
+            <button @click="clearImage" class="img-edit-button-group-btn"><icon-delete></icon-delete></button>
         </div>
-
+        <image-editor :img-src="selectedImage" v-if="isEditing"></image-editor>
     </div>
 </template>
 
@@ -35,6 +37,7 @@
     import IconCamera from './svg-icons/icon-camera.vue'
     import IconCrop from './svg-icons/icon-crop.vue'
     import IconDelete from './svg-icons/icon-delete.vue'
+    import ImageEditor from './image-editor.vue'
 
     export default {
         name: "image-upload",
@@ -43,23 +46,28 @@
             IconCrop,
             IconDelete,
             ImageSelector,
+            ImageEditor
         },
         data(){
             return {
-                selectedImage: undefined
+                selectedImage: undefined,
+                isEditing: false
             }
         },
         methods: {
             reselectImage() {
                 this.$refs.pictureInput.selectImage();
             },
+            clearImage() {
+                this.$refs.pictureInput.removeImage();
+            },
             onFileError(err) {
                 this.$emit('fileError', err)
             },
-            onFileChange(imageBase64){
+            onFileChange(imageBase64 = undefined){
                 this.selectedImage = imageBase64;
+                this.isEditing = false;
                 this.$emit('fileChange', imageBase64);
-                console.log(imageBase64)
             }
         }
     }

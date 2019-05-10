@@ -34,7 +34,7 @@
             <slot v-if="imageSelected" name="unsupport-preview-selected">One file Selected</slot>
             <slot v-else name="unsupport-preview-unselected"></slot>
         </div>
-        <input ref="fileInput" type="file" :name="name" :id="id" :accept="accept" @change="onFileChange">
+        <input ref="fileInput" type="file" :name="name" :accept="accept" @change="onFileChange">
     </div>
 </template>
 
@@ -54,22 +54,6 @@
                 type: String,
                 default: null
             },
-            id: {
-                type: [String, Number],
-                default: null
-            },
-            buttonClass: {
-                type: String,
-                default: 'btn btn-primary button'
-            },
-            removeButtonClass: {
-                type: String,
-                default: 'btn btn-secondary button secondary'
-            },
-            aspectButtonClass: {
-                type: String,
-                default: 'btn btn-secondary button secondary'
-            },
             prefill: {
                 type: [String, File],
                 default: ''
@@ -79,30 +63,6 @@
                 default: () => {
                     return {}
                 }
-            },
-            crop: {
-                type: Boolean,
-                default: true
-            },
-            radius: {
-                type: [String, Number],
-                default: 0
-            },
-            removable: {
-                type: Boolean,
-                default: false
-            },
-            hideChangeButton: {
-                type: Boolean,
-                default: false
-            },
-            autoToggleAspectRatio: {
-                type: Boolean,
-                default: false
-            },
-            toggleAspectRatio: {
-                type: Boolean,
-                default: false
             },
             changeOnClick: {
                 type: Boolean,
@@ -260,7 +220,8 @@
                 this.image = ''
                 this.file = null
                 this.imageObject = null
-                this.$emit('remove')
+                this.$emit('remove');
+                this.$emit('change', undefined)
             },
             preloadImage (source, options) {
                 // ie 11 support
