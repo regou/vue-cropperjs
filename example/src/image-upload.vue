@@ -1,7 +1,5 @@
 <template>
     <div class="ps-image-uploader">
-
-
         <image-selector
                 ref="pictureInput"
                 width="600"
@@ -11,43 +9,67 @@
                 @error="onFileError"
                 @change="onFileChange">
             <template v-slot:support-drop>
-                <svg class="camera-icon" viewBox="0 0 24 24">
-                    <g fill="none" fill-rule="evenodd">
-                        <path d="M18.4 6.6c.88 0 1.6.72 1.6 1.6v9.6c0 .88-.72 1.6-1.6 1.6H5.6c-.88 0-1.6-.72-1.6-1.6V8.2c0-.88.72-1.6 1.6-1.6h2.536l.984-1.08c.304-.328.736-.52 1.184-.52h3.392c.448 0 .88.192 1.176.52l.992 1.08H18.4zM12 17c2.208 0 4-1.792 4-4s-1.792-4-4-4-4 1.792-4 4 1.792 4 4 4zm0-1.6a2.4 2.4 0 1 1 0-4.8 2.4 2.4 0 0 1 0 4.8z"/>
-                    </g>
-                </svg>
+                <icon-camera class="overlayed-camera-icon"></icon-camera>
                 <div class="uploader__placeholder_text">
                     <h5>Tap or drag and drop image here</h5>
                     <p>Supports JPG and PNG</p>
                     <p>Maximum file size is 4MB</p>
                 </div>
 
+                <!--假按钮，做个样子-->
                 <button class="uploader__btn">Upload</button>
             </template>
         </image-selector>
+
+        <div v-if="selectedImage" class="ps-image-uploader__edit-button-group">
+            <button @click="reselectImage" class="img-edit-button-group-btn"><icon-camera></icon-camera></button>
+            <button class="img-edit-button-group-btn"><icon-crop></icon-crop></button>
+            <button class="img-edit-button-group-btn"><icon-delete></icon-delete></button>
+        </div>
+
     </div>
 </template>
 
 <script>
     import ImageSelector from './image-selector.vue'
+    import IconCamera from './svg-icons/icon-camera.vue'
+    import IconCrop from './svg-icons/icon-crop.vue'
+    import IconDelete from './svg-icons/icon-delete.vue'
+
     export default {
         name: "image-upload",
         components: {
+            IconCamera,
+            IconCrop,
+            IconDelete,
             ImageSelector,
         },
+        data(){
+            return {
+                selectedImage: undefined
+            }
+        },
         methods: {
-            onFileError() {
-
+            reselectImage() {
+                this.$refs.pictureInput.selectImage();
+            },
+            onFileError(err) {
+                this.$emit('fileError', err)
             },
             onFileChange(imageBase64){
+                this.selectedImage = imageBase64;
+                this.$emit('fileChange', imageBase64);
                 console.log(imageBase64)
             }
         }
     }
 </script>
+<style scoped>
 
+</style>
 <style>
     .ps-image-uploader{
+        position: relative;
         border-radius: 3px;
         border: dashed 1px #45a321;
         background-color: #ffffff;
@@ -70,21 +92,20 @@
         color: #616161;
     }
 
-    .uploader__drop_area {
-        display: block;
+    .overlayed-camera-icon{
+        max-height: 5em; max-width: 5em;
     }
+    .overlayed-camera-icon path{
+        fill: #f4f5f7;
+    }
+
     .uploader__drop_area input{
         opacity: 0;
         position: absolute;
         width: 5px;height: 5px;
     }
 
-    .camera-icon{
-        height: 25%;
-    }
-    .camera-icon path{
-        fill: #f4f5f7;
-    }
+
     .uploader__btn{
         background: #FFF;
         border-radius: 3px;
@@ -96,6 +117,32 @@
         border: 1px solid #bbb5b5;
         outline: none;
         box-shadow: none;
+    }
+
+
+    .ps-image-uploader__edit-button-group{
+        position: absolute;
+        top:0;left: calc(100% + 4px);
+    }
+    .img-edit-button-group-btn{
+        cursor: pointer;
+        padding: 5px 6px;
+        border-radius: 3px;
+        background-color: #fefefe;
+        margin-bottom: 0.5em;
+        outline: none;
+        border: 1px solid #bbb5b5;
+    }
+
+    .img-edit-button-group-btn:active,
+    .img-edit-button-group-btn.active{
+        border-color: rgba(255,255,255,0);
+        background: #f5f5f5;
+    }
+
+    .img-edit-button-group-btn svg{
+        width: 1.5em;height: 1.5em;
+        fill: #505f79;
     }
 
 </style>

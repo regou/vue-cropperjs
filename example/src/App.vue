@@ -55,6 +55,6 @@
 <!-- Add "scoped" attribute to limit CSS to this component only -->
 <style>
   .ps-image-uploader{
-    width: 15em;height: 15em;
+    width: 15rem;height: 15rem;
   }
 </style>

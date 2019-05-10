@@ -18,9 +18,12 @@
                      tabindex="0"
                 ></figure>
                 <div v-if="!imageSelected"
-                     class="picture-inner full">
-                    <slot v-if="supportsDragAndDrop" name="support-drop"></slot>
-                    <slot v-else name="unsupport-drop"></slot>
+                     class="picture-inner">
+                    <div class="picture-inner-text">
+                        <slot v-if="supportsDragAndDrop" name="support-drop"></slot>
+                        <slot v-else name="unsupport-drop"></slot>
+                    </div>
+
                 </div>
             </div>
             <!--<button v-if="imageSelected && !hideChangeButton" @click.prevent="selectImage" :class="buttonClass">{{ strings.change }}</button>-->
@@ -341,6 +344,7 @@
     }
     .preview-container {
         border: none;
+        outline: none;
         width: 100%;
         height: 100%;
         box-sizing: border-box;
@@ -348,6 +352,7 @@
         cursor: pointer;
     }
     .picture-preview {
+        outline: none;
         margin: 0;
         padding: 0;
         background-repeat: no-repeat;
@@ -356,6 +361,10 @@
         z-index: 1;
         box-sizing: border-box;
     }
+    .picture-preview:active{
+        opacity: 0.9;
+    }
+
     .picture-input.dragging-over .preview-container {
         cursor: copy;
         opacity: 0.5;
@@ -364,19 +373,18 @@
         filter: brightness(0.5);
     }
     .picture-inner {
-        position: absolute;
         z-index: 2;
-        padding: 1em;
+        padding: 0.5em;
         pointer-events: none;
         box-sizing: border-box;
         border-radius: 8px;
+        display: table;
+        width: 100%;height:100%;
     }
     .picture-inner .picture-inner-text {
         display: table-cell;
         vertical-align: middle;
         text-align: center;
-        font-size: 2em;
-        line-height: 1.5;
     }
 
     input[type=file] {
