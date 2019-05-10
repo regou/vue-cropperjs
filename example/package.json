@@ -8,7 +8,7 @@
   },
   "scripts": {
     "dev": "webpack-dev-server --open --inline --hot",
-    "start": "webpack-dev-server --open --inline --hot --host 0.0.0.0 --public 0.0.0.0:8080"
+    "start": "webpack-dev-server --open --inline --hot --host 0.0.0.0 --public 192.168.5.121:8080"
   },
   "dependencies": {
     "vue": ">=2.0.0",
