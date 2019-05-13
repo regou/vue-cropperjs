@@ -42,8 +42,9 @@
                     class="img-edit-button-group-btn"><icon-crop></icon-crop></button>
             <button @click="clearImage" class="img-edit-button-group-btn"><icon-delete></icon-delete></button>
         </div>
-        <image-editor @close="stopEditing"
-                v-model="selectedImage" v-if="isEditing"></image-editor>
+        <image-editor @close="stopEditing" :key="imageId"
+                      v-model="selectedImage"
+                      v-show="isEditing"></image-editor>
     </div>
 </template>
 
@@ -53,6 +54,13 @@
     import IconCrop from './svg-icons/icon-crop.vue'
     import IconDelete from './svg-icons/icon-delete.vue'
     import ImageEditor from './image-editor.vue'
+
+    const genImageId = (function () {
+        let _id = 0;
+        return function () {
+            return _id += 1
+        }
+    })();
 
     export default {
         name: "image-upload",
@@ -65,6 +73,7 @@
         },
         data(){
             return {
+                imageId: 0,
                 selectedImage: undefined,
                 isEditing: false
             }
@@ -91,6 +100,7 @@
                 this.$emit('fileError', err)
             },
             onFileChange(imageBase64OrDom = undefined){
+                this.imageId = genImageId();
                 if(typeof imageBase64OrDom === 'string'){
                     let imageBase64 = imageBase64OrDom;
                     this.selectedImage = imageBase64;
