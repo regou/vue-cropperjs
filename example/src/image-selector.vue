@@ -30,9 +30,9 @@
             <!--<button v-if="imageSelected && removable" @click.prevent="removeImage" :class="removeButtonClass">{{ strings.remove }}</button>-->
             <!--<button v-if="imageSelected && toggleAspectRatio && width !== height" @click.prevent="rotateImage" :class="aspectButtonClass">{{ strings.aspect }}</button>-->
         </div>
-        <div v-else>
+        <div v-else class="preview-container" @click.prevent="onClick">
             <slot v-if="imageSelected" name="unsupport-preview-selected">One file Selected</slot>
-            <slot v-else name="unsupport-preview-unselected"></slot>
+            <slot v-else name="unsupport-drop"></slot>
         </div>
         <input ref="fileInput" type="file" :name="name" :accept="accept" @change="onFileChange">
     </div>
@@ -55,7 +55,7 @@
                 default: null
             },
             prefill: {
-                type: [String, File],
+                type: String,
                 default: ''
             },
             prefillOptions: {
@@ -76,7 +76,8 @@
         watch: {
             prefill () {
                 if (this.prefill) {
-                    this.preloadImage(this.prefill, this.prefillOptions)
+                    this.imageSelected = true
+                    this.image = this.prefill
                 } else {
                     this.removeImage()
                 }
@@ -91,10 +92,6 @@
             }
         },
         mounted () {
-            if (this.prefill) {
-                this.preloadImage(this.prefill, this.prefillOptions)
-            }
-
             if (this.accept !== 'image/*') {
                 this.fileTypes = this.accept.split(',')
                 this.fileTypes = this.fileTypes.map(s => s.trim())
@@ -136,62 +133,57 @@
                 this.onFileChange(e)
             },
             onFileChange (e, prefill) {
-                let files = e.target.files || e.dataTransfer.files
-                if (!files.length) {
-                    return
-                }
-                if (files[0].size <= 0 || files[0].size > this.size * 1024 * 1024) {
-                    this.$emit('error', {
-                        type: 'fileSize',
-                        fileSize: files[0].size,
-                        fileType: files[0].type,
-                        fileName: files[0].name,
-                        message: 'More than (' + this.size + 'MB)'
-                    })
-                    return
-                }
-                if (files[0].name === this.fileName && files[0].size === this.fileSize && this.fileModified === files[0].lastModified) {
-                    return
-                }
-
-                this.file = files[0]
-                this.fileName = files[0].name
-                this.fileSize = files[0].size
-                this.fileModified = files[0].lastModified
-                this.fileType = files[0].type
-
-                if (this.accept === 'image/*') {
-                    if (files[0].type.substr(0, 6) !== 'image/') {
+                if (this.supportsPreview) {
+                    let files = e.target.files || e.dataTransfer.files
+                    if (!files.length) {
                         return
                     }
-                } else {
-                    if (this.fileTypes.indexOf(files[0].type) === -1) {
+                    if (files[0].size <= 0 || files[0].size > this.size * 1024 * 1024) {
                         this.$emit('error', {
-                            type: 'fileType',
+                            type: 'fileSize',
                             fileSize: files[0].size,
                             fileType: files[0].type,
                             fileName: files[0].name,
-                            message: this.strings.fileType
+                            message: 'More than (' + this.size + 'MB)'
                         })
                         return
                     }
-                }
-                this.imageSelected = true
-                this.image = ''
-                if (this.supportsPreview) {
+                    if (files[0].name === this.fileName && files[0].size === this.fileSize && this.fileModified === files[0].lastModified) {
+                        return
+                    }
+
+                    this.file = files[0]
+                    this.fileName = files[0].name
+                    this.fileSize = files[0].size
+                    this.fileModified = files[0].lastModified
+                    this.fileType = files[0].type
+
+                    if (this.accept === 'image/*') {
+                        if (files[0].type.substr(0, 6) !== 'image/') {
+                            return
+                        }
+                    } else {
+                        if (this.fileTypes.indexOf(files[0].type) === -1) {
+                            this.$emit('error', {
+                                type: 'fileType',
+                                fileSize: files[0].size,
+                                fileType: files[0].type,
+                                fileName: files[0].name,
+                                message: this.strings.fileType
+                            })
+                            return
+                        }
+                    }
+                    this.imageSelected = true
+                    this.image = ''
+
                     this.loadImage(files[0], prefill || false)
                 } else {
-                    if (prefill) {
-                        this.$emit('prefill')
-                    } else {
-                        this.$emit('change', this.image)
-                    }
+                    this.$emit('change', this.$refs.fileInput)
                 }
             },
             onError (error) {
-                if (this.alertOnError) {
-                    alert(error.message)
-                }
+                console.error(error)
             },
             loadImage (file, prefill) {
                 let reader = new FileReader()
@@ -222,64 +214,9 @@
                 this.imageObject = null
                 this.$emit('remove');
                 this.$emit('change', undefined)
-            },
-            preloadImage (source, options) {
-                // ie 11 support
-                let File = window.File
-                try {
-                    new File([], '') // eslint-disable-line
-                } catch (e) {
-                    File = class File extends Blob {
-                        constructor (chunks, filename, opts = {}) {
-                            super(chunks, opts)
-                            this.lastModifiedDate = new Date()
-                            this.lastModified = +this.lastModifiedDate
-                            this.name = filename
-                        }
-                    }
-                }
-                options = Object.assign({}, options)
-                if (typeof source === 'object') {
-                    this.imageSelected = true
-                    this.image = ''
-                    if (this.supportsPreview) {
-                        this.loadImage(source, true)
-                    } else {
-                        this.$emit('prefill')
-                    }
-                    return
-                }
-                let headers = new Headers()
-                headers.append('Accept', 'image/*')
-                fetch(source, {
-                    method: 'GET',
-                    mode: 'cors',
-                    headers: headers
-                }).then(response => {
-                    return response.blob()
-                })
-                    .then(imageBlob => {
-                        let e = { target: { files: [] } }
-                        const fileName = options.fileName || source.split('/').slice(-1)[0]
-                        let mediaType = options.mediaType || ('image/' + (options.fileType || fileName.split('.').slice(-1)[0]))
-                        mediaType = mediaType.replace('jpg', 'jpeg')
-                        e.target.files[0] = new File([imageBlob], fileName, { type: mediaType })
-                        this.onFileChange(e, true)
-                    })
-                    .catch(err => {
-                        this.$emit('error', {
-                            type: 'failedPrefill',
-                            message: 'Failed loading prefill image: ' + err
-                        })
-                    })
             }
         },
         computed: {
-            supportsUpload () {
-                const el = document.createElement('input')
-                el.type = 'file'
-                return !el.disabled
-            },
             supportsPreview () {
                 return window.FileReader
             },

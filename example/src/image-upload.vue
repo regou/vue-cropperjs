@@ -1,6 +1,8 @@
 <template>
     <div class="ps-image-uploader">
         <image-selector
+                name="ps-image-input"
+                :prefill="selectedImage"
                 ref="pictureInput"
                 width="600"
                 height="400"
@@ -19,16 +21,29 @@
                 <!--假按钮，做个样子-->
                 <button class="uploader__btn">Upload</button>
             </template>
+            <template v-slot:unsupport-drop>
+                <icon-camera class="overlayed-camera-icon"></icon-camera>
+                <div class="uploader__placeholder_text">
+                    <h5>Tap here</h5>
+                    <p>Supports JPG and PNG</p>
+                    <p>Maximum file size is 4MB</p>
+                </div>
+
+                <!--假按钮，做个样子-->
+                <button class="uploader__btn">Upload</button>
+            </template>
         </image-selector>
 
         <div v-if="selectedImage" class="ps-image-uploader__edit-button-group">
             <button @click="reselectImage" class="img-edit-button-group-btn"><icon-camera></icon-camera></button>
-            <button @click="isEditing = !isEditing"
+            <button v-if="selectedImage"
+                    @click="isEditing = !isEditing"
                     :class="{active:isEditing}"
                     class="img-edit-button-group-btn"><icon-crop></icon-crop></button>
             <button @click="clearImage" class="img-edit-button-group-btn"><icon-delete></icon-delete></button>
         </div>
-        <image-editor :img-src="selectedImage" v-if="isEditing"></image-editor>
+        <image-editor @close="stopEditing"
+                v-model="selectedImage" v-if="isEditing"></image-editor>
     </div>
 </template>
 
@@ -54,7 +69,18 @@
                 isEditing: false
             }
         },
+        watch: {
+            selectedImage(imageBase64){
+                this.$emit('change', {
+                    type: 'base64',
+                    value: imageBase64
+                });
+            }
+        },
         methods: {
+            stopEditing() {
+                this.isEditing = false;
+            },
             reselectImage() {
                 this.$refs.pictureInput.selectImage();
             },
@@ -64,16 +90,46 @@
             onFileError(err) {
                 this.$emit('fileError', err)
             },
-            onFileChange(imageBase64 = undefined){
-                this.selectedImage = imageBase64;
-                this.isEditing = false;
-                this.$emit('fileChange', imageBase64);
+            onFileChange(imageBase64OrDom = undefined){
+                if(typeof imageBase64OrDom === 'string'){
+                    let imageBase64 = imageBase64OrDom;
+                    this.selectedImage = imageBase64;
+                    this.isEditing = false;
+                    this.$emit('fileChange', imageBase64);
+                }else if(imageBase64OrDom){
+                    // Preview Unsupported
+                    this.$emit('change', {
+                        type: 'input',
+                        value: imageBase64OrDom
+                    });
+
+                }
+
             }
         }
     }
 </script>
-<style scoped>
+<style>
+    .img-edit-button-group-btn{
+        cursor: pointer;
+        padding: 5px 6px;
+        border-radius: 3px;
+        background-color: #fefefe;
+        margin-bottom: 0.5em;
+        outline: none;
+        border: 1px solid #bbb5b5;
+    }
 
+    .img-edit-button-group-btn:active,
+    .img-edit-button-group-btn.active{
+        border-color: rgba(255,255,255,0);
+        background: #f5f5f5;
+    }
+
+    .img-edit-button-group-btn svg{
+        width: 1.5em;height: 1.5em;
+        fill: #505f79;
+    }
 </style>
 <style>
     .ps-image-uploader{
@@ -131,26 +187,6 @@
     .ps-image-uploader__edit-button-group{
         position: absolute;
         top:0;left: calc(100% + 4px);
-    }
-    .img-edit-button-group-btn{
-        cursor: pointer;
-        padding: 5px 6px;
-        border-radius: 3px;
-        background-color: #fefefe;
-        margin-bottom: 0.5em;
-        outline: none;
-        border: 1px solid #bbb5b5;
-    }
-
-    .img-edit-button-group-btn:active,
-    .img-edit-button-group-btn.active{
-        border-color: rgba(255,255,255,0);
-        background: #f5f5f5;
-    }
-
-    .img-edit-button-group-btn svg{
-        width: 1.5em;height: 1.5em;
-        fill: #505f79;
     }
 
 </style>
